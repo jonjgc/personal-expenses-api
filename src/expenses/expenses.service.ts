@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { FilterExpenseDto } from './dto/filter-expense.dto';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class ExpensesService {
@@ -26,10 +27,13 @@ export class ExpensesService {
     }
 
   async findOne(id: string) {
-    return this.prisma.expense.findUnique({ where: { id } });
+    const expense = await this.prisma.expense.findUnique({ where: { id } });
+    if (!expense) throw new NotFoundException(`Despesa com ID ${id} não encontrada`);
+    return expense;
   }
 
   async update(id: string, updateExpenseDto: UpdateExpenseDto) {
+    await this.findOne(id); // Garante que a despesa existe
     return this.prisma.expense.update({
       where: { id },
       data: updateExpenseDto,
@@ -37,6 +41,7 @@ export class ExpensesService {
   }
 
   async remove(id: string) {
+    await this.findOne(id); // Garante que a despesa existe
     return this.prisma.expense.delete({ where: { id } });
   }
 }
